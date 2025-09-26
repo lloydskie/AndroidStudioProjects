@@ -1,29 +1,3 @@
-
-import android.os.Bundle
-import androidx.activity.ComponentActivity
-import androidx.activity.compose.setContent
-import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.foundation.clickable
-import androidx.compose.material.icons.filled.Event
-import java.text.SimpleDateFormat
-import java.util.Calendar
-import com.example.todo.ui.theme.ToDoTheme
-
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -52,7 +26,6 @@ import java.text.SimpleDateFormat
 import java.util.*
 import com.example.todo.ui.theme.ToDoTheme
 
-
 data class TodoItem(
     val title: String,
     val notes: String = "",
@@ -73,7 +46,6 @@ class MainActivity : ComponentActivity() {
         }
     }
 }
-
 
 @Composable
 fun MainScreen() {
@@ -132,7 +104,7 @@ fun MainScreen() {
         }
         if (showAddDialog) {
             AddTodoDialog(
-                onAdd = { title, notes, dueDate, category, priority ->
+                onAdd = { title: String, notes: String, dueDate: String, category: String, priority: String ->
                     todos = todos + TodoItem(title, notes, dueDate = dueDate, category = category, priority = priority)
                     showAddDialog = false
                 },
@@ -147,7 +119,7 @@ fun MainScreen() {
                 initialDueDate = todo.dueDate,
                 initialCategory = todo.category,
                 initialPriority = todo.priority,
-                onEdit = { newTitle, newNotes, newDueDate, newCategory, newPriority ->
+                onEdit = { newTitle: String, newNotes: String, newDueDate: String, newCategory: String, newPriority: String ->
                     todos = todos.toMutableList().also {
                         it[editingTodoIndex] = todo.copy(title = newTitle, notes = newNotes, dueDate = newDueDate, category = newCategory, priority = newPriority)
                     }
@@ -250,6 +222,171 @@ fun TodoDetailScreen(
         }
     }
 }
+
+@Composable
+@OptIn(ExperimentalMaterial3Api::class)
+fun AddTodoDialog(
+    onAdd: (title: String, notes: String, dueDate: String, category: String, priority: String) -> Unit,
+    onDismiss: () -> Unit
+) {
+    var title by remember { mutableStateOf("") }
+    var notes by remember { mutableStateOf("") }
+    var dueDate by remember { mutableStateOf("") }
+    var category by remember { mutableStateOf("Personal") }
+    var priority by remember { mutableStateOf("Medium") }
+    var showDatePicker by remember { mutableStateOf(false) }
+
+    val dateFormat = remember { SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()) }
+    val dueDateDisplay = dueDate
+    val today = remember { Calendar.getInstance().apply { set(Calendar.HOUR_OF_DAY, 0); set(Calendar.MINUTE, 0); set(Calendar.SECOND, 0); set(Calendar.MILLISECOND, 0) }.timeInMillis }
+    val datePickerState = rememberDatePickerState(
+        initialDisplayedMonthMillis = today
+    )
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("New To-Do") },
+        text = {
+            Column {
+                OutlinedTextField(
+                    value = title,
+                    onValueChange = { title = it },
+                    label = { Text("Title") },
+                    singleLine = true
+                )
+                OutlinedTextField(
+                    value = notes,
+                    onValueChange = { notes = it },
+                    label = { Text("Notes") },
+                    modifier = Modifier.padding(top = 8.dp)
+                )
+                OutlinedTextField(
+                    value = dueDateDisplay,
+                    onValueChange = {},
+                    label = { Text("Due Date") },
+                    modifier = Modifier
+                        .padding(top = 8.dp)
+                        .clickable { showDatePicker = true },
+                    readOnly = true,
+                    trailingIcon = {
+                        IconButton(onClick = { showDatePicker = true }) {
+                            Icon(Icons.Filled.Event, contentDescription = "Pick date")
+                        }
+                    }
+                )
+                // Category Dropdown
+                val categories = listOf("Personal", "Work", "School")
+                var expanded by remember { mutableStateOf(false) }
+                Box(modifier = Modifier.padding(top = 8.dp)) {
+                    OutlinedTextField(
+                        value = category,
+                        onValueChange = {},
+                        label = { Text("Category") },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { expanded = true },
+                        readOnly = true,
+                        trailingIcon = {
+                            IconButton(onClick = { expanded = true }) {
+                                Icon(Icons.Filled.MoreVert, contentDescription = "Select category")
+                            }
+                        }
+                    )
+                    DropdownMenu(
+                        expanded = expanded,
+                        onDismissRequest = { expanded = false }
+                    ) {
+                        categories.forEach { cat ->
+                            DropdownMenuItem(
+                                text = { Text(cat) },
+                                onClick = {
+                                    category = cat
+                                    expanded = false
+                                }
+                            )
+                        }
+                    }
+                }
+                // Priority Dropdown
+                val priorities = listOf("Low", "Medium", "High")
+                var expandedPriority by remember { mutableStateOf(false) }
+                Box(modifier = Modifier.padding(top = 8.dp)) {
+                    OutlinedTextField(
+                        value = priority,
+                        onValueChange = {},
+                        label = { Text("Priority") },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { expandedPriority = true },
+                        readOnly = true,
+                        trailingIcon = {
+                            IconButton(onClick = { expandedPriority = true }) {
+                                Icon(Icons.Filled.MoreVert, contentDescription = "Select priority")
+                            }
+                        }
+                    )
+                    DropdownMenu(
+                        expanded = expandedPriority,
+                        onDismissRequest = { expandedPriority = false }
+                    ) {
+                        priorities.forEach { p ->
+                            DropdownMenuItem(
+                                text = { Text(p) },
+                                onClick = {
+                                    priority = p
+                                    expandedPriority = false
+                                }
+                            )
+                        }
+                    }
+                }
+                var showWarning by remember { mutableStateOf(false) }
+                if (showDatePicker) {
+                    DatePickerDialog(
+                        onDismissRequest = { showDatePicker = false },
+                        confirmButton = {
+                            TextButton(onClick = {
+                                val millis = datePickerState.selectedDateMillis
+                                if (millis != null && millis >= today) {
+                                    dueDate = dateFormat.format(Date(millis))
+                                    showDatePicker = false
+                                } else {
+                                    showWarning = true
+                                }
+                            }) { Text("OK") }
+                        },
+                        dismissButton = {
+                            TextButton(onClick = { showDatePicker = false }) { Text("Cancel") }
+                        }
+                    ) {
+                        CustomDatePicker(state = datePickerState, today = today)
+                    }
+                }
+                if (showWarning) {
+                    AlertDialog(
+                        onDismissRequest = { showWarning = false },
+                        title = { Text("Invalid Date") },
+                        text = { Text("You cannot select a past date. Please choose today or a future date.") },
+                        confirmButton = {
+                            TextButton(onClick = { showWarning = false }) { Text("OK") }
+                        }
+                    )
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(
+                onClick = {
+                    if (title.isNotBlank()) onAdd(title, notes, dueDate, category, priority)
+                }
+            ) { Text("Add") }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text("Cancel") }
+        }
+    )
+}
+
 @Composable
 @OptIn(ExperimentalMaterial3Api::class)
 fun EditTodoDialog(
@@ -258,7 +395,7 @@ fun EditTodoDialog(
     initialDueDate: String,
     initialCategory: String,
     initialPriority: String,
-    onEdit: (String, String, String, String, String) -> Unit,
+    onEdit: (newTitle: String, newNotes: String, newDueDate: String, newCategory: String, newPriority: String) -> Unit,
     onDelete: () -> Unit,
     onDismiss: () -> Unit
 ) {
@@ -428,176 +565,10 @@ fun EditTodoDialog(
 
 @Composable
 @OptIn(ExperimentalMaterial3Api::class)
-fun AddTodoDialog(onAdd: (String, String, String, String, String) -> Unit, onDismiss: () -> Unit) {
-    var title by remember { mutableStateOf("") }
-    var notes by remember { mutableStateOf("") }
-    var dueDate by remember { mutableStateOf("") }
-    var category by remember { mutableStateOf("Personal") }
-    var priority by remember { mutableStateOf("Medium") }
-    var showDatePicker by remember { mutableStateOf(false) }
-
-    val dateFormat = remember { SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()) }
-    val dueDateDisplay = dueDate
-    val today = remember { Calendar.getInstance().apply { set(Calendar.HOUR_OF_DAY, 0); set(Calendar.MINUTE, 0); set(Calendar.SECOND, 0); set(Calendar.MILLISECOND, 0) }.timeInMillis }
-    val datePickerState = rememberDatePickerState(
-        initialDisplayedMonthMillis = today
-    )
-
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text("New To-Do") },
-        text = {
-            Column {
-                OutlinedTextField(
-                    value = title,
-                    onValueChange = { title = it },
-                    label = { Text("Title") },
-                    singleLine = true
-                )
-                OutlinedTextField(
-                    value = notes,
-                    onValueChange = { notes = it },
-                    label = { Text("Notes") },
-                    modifier = Modifier.padding(top = 8.dp)
-                )
-                OutlinedTextField(
-                    value = dueDateDisplay,
-                    onValueChange = {},
-                    label = { Text("Due Date") },
-                    modifier = Modifier
-                        .padding(top = 8.dp)
-                        .clickable { showDatePicker = true },
-                    readOnly = true,
-                    trailingIcon = {
-                        IconButton(onClick = { showDatePicker = true }) {
-                            Icon(Icons.Filled.Event, contentDescription = "Pick date")
-                        }
-                    }
-                )
-                // Category Dropdown
-                val categories = listOf("Personal", "Work", "School")
-                var expanded by remember { mutableStateOf(false) }
-                Box(modifier = Modifier.padding(top = 8.dp)) {
-                    OutlinedTextField(
-                        value = category,
-                        onValueChange = {},
-                        label = { Text("Category") },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable { expanded = true },
-                        readOnly = true,
-                        trailingIcon = {
-                            IconButton(onClick = { expanded = true }) {
-                                Icon(Icons.Filled.MoreVert, contentDescription = "Select category")
-                            }
-                        }
-                    )
-                    DropdownMenu(
-                        expanded = expanded,
-                        onDismissRequest = { expanded = false }
-                    ) {
-                        categories.forEach { cat ->
-                            DropdownMenuItem(
-                                text = { Text(cat) },
-                                onClick = {
-                                    category = cat
-                                    expanded = false
-                                }
-                            )
-                        }
-                    }
-                }
-                // Priority Dropdown
-                val priorities = listOf("Low", "Medium", "High")
-                var expandedPriority by remember { mutableStateOf(false) }
-                Box(modifier = Modifier.padding(top = 8.dp)) {
-                    OutlinedTextField(
-                        value = priority,
-                        onValueChange = {},
-                        label = { Text("Priority") },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable { expandedPriority = true },
-                        readOnly = true,
-                        trailingIcon = {
-                            IconButton(onClick = { expandedPriority = true }) {
-                                Icon(Icons.Filled.MoreVert, contentDescription = "Select priority")
-                            }
-                        }
-                    )
-                    DropdownMenu(
-                        expanded = expandedPriority,
-                        onDismissRequest = { expandedPriority = false }
-                    ) {
-                        priorities.forEach { p ->
-                            DropdownMenuItem(
-                                text = { Text(p) },
-                                onClick = {
-                                    priority = p
-                                    expandedPriority = false
-                                }
-                            )
-                        }
-                    }
-                }
-                var showWarning by remember { mutableStateOf(false) }
-                if (showDatePicker) {
-                    DatePickerDialog(
-                        onDismissRequest = { showDatePicker = false },
-                        confirmButton = {
-                            TextButton(onClick = {
-                                val millis = datePickerState.selectedDateMillis
-                                if (millis != null && millis >= today) {
-                                    dueDate = dateFormat.format(Date(millis))
-                                    showDatePicker = false
-                                } else {
-                                    showWarning = true
-                                }
-                            }) { Text("OK") }
-                        },
-                        dismissButton = {
-                            TextButton(onClick = { showDatePicker = false }) { Text("Cancel") }
-                        }
-                    ) {
-                        CustomDatePicker(state = datePickerState, today = today)
-                    }
-                }
-                if (showWarning) {
-                    AlertDialog(
-                        onDismissRequest = { showWarning = false },
-                        title = { Text("Invalid Date") },
-                        text = { Text("You cannot select a past date. Please choose today or a future date.") },
-                        confirmButton = {
-                            TextButton(onClick = { showWarning = false }) { Text("OK") }
-                        }
-                    )
-                }
-// CustomDatePicker overlays the default DatePicker and dims past dates (visual only)
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
 fun CustomDatePicker(state: DatePickerState, today: Long) {
-    // The default DatePicker does not support per-day styling, so this is a placeholder for future customization.
-    // For now, just use the default DatePicker. The logic in the dialog prevents past date selection.
     Box {
         DatePicker(state = state)
-        // Overlay to dim past dates (visual only, selection is still handled in dialog logic)
-        // This is a visual hint; actual selection is blocked in dialog confirmButton
-        // If you want to further customize, you can draw overlays here
     }
-}
-            }
-        },
-        confirmButton = {
-            TextButton(
-                onClick = {
-                    if (title.isNotBlank()) onAdd(title, notes, dueDate, category, priority)
-                }
-            ) { Text("Add") }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) { Text("Cancel") }
-        }
-    )
 }
 
 
