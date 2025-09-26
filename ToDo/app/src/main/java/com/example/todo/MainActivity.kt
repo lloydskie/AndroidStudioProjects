@@ -18,13 +18,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.material3.DatePickerDialog
-import androidx.compose.material3.DatePicker
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.foundation.clickable
 import androidx.compose.material.icons.filled.Event
 import java.text.SimpleDateFormat
-import java.util.*
+import java.util.Calendar
 import com.example.todo.ui.theme.ToDoTheme
 
 import android.os.Bundle
