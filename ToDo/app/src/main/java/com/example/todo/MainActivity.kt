@@ -1,16 +1,31 @@
-// CustomDatePicker overlays the default DatePicker and dims past dates (visual only)
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun CustomDatePicker(state: DatePickerState, today: Long) {
-    // The default DatePicker does not support per-day styling, so this is a placeholder for future customization.
-    // For now, just use the default DatePicker. The logic in the dialog prevents past date selection.
-    Box {
-        DatePicker(state = state)
-        // Overlay to dim past dates (visual only, selection is still handled in dialog logic)
-        // This is a visual hint; actual selection is blocked in dialog confirmButton
-        // If you want to further customize, you can draw overlays here
-    }
-}
+
+import android.os.Bundle
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.setContent
+import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.material3.DatePickerDialog
+import androidx.compose.material3.DatePicker
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.foundation.clickable
+import androidx.compose.material.icons.filled.Event
+import java.text.SimpleDateFormat
+import java.util.*
+import com.example.todo.ui.theme.ToDoTheme
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
