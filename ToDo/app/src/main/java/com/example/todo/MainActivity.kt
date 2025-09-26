@@ -218,8 +218,8 @@ fun EditTodoDialog(
 
     val dateFormat = remember { SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()) }
     val dueDateDisplay = dueDate
-    val datePickerState = androidx.compose.material3.rememberDatePickerState(
-        initialSelectedDateMillis = try { dateFormat.parse(initialDueDate)?.time } catch (e: Exception) { null }
+    val datePickerState = rememberDatePickerState(
+        initialSelectedDateMillis = try { dateFormat.parse(initialDueDate)?.time } catch (_: Exception) { null }
     )
 
     AlertDialog(
@@ -303,7 +303,7 @@ fun AddTodoDialog(onAdd: (String, String, String) -> Unit, onDismiss: () -> Unit
 
     val dateFormat = remember { SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()) }
     val dueDateDisplay = dueDate
-    val datePickerState = androidx.compose.material3.rememberDatePickerState()
+    val datePickerState = rememberDatePickerState()
 
     AlertDialog(
         onDismissRequest = onDismiss,
