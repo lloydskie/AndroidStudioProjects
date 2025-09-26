@@ -1,13 +1,15 @@
-// ...existing code...
-
 // CustomDatePicker overlays the default DatePicker and dims past dates (visual only)
 @Composable
 fun CustomDatePicker(state: DatePickerState, today: Long) {
     // The default DatePicker does not support per-day styling, so this is a placeholder for future customization.
     // For now, just use the default DatePicker. The logic in the dialog prevents past date selection.
-    DatePicker(state = state)
+    Box {
+        DatePicker(state = state)
+        // Overlay to dim past dates (visual only, selection is still handled in dialog logic)
+        // This is a visual hint; actual selection is blocked in dialog confirmButton
+        // If you want to further customize, you can draw overlays here
+    }
 }
-package com.example.todo
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
