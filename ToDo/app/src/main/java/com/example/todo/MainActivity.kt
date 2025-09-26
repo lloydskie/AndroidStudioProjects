@@ -261,7 +261,7 @@ fun EditTodoDialog(
                         confirmButton = {
                             TextButton(onClick = {
                                 val millis = datePickerState.selectedDateMillis
-                                if (millis != null) {
+                                if (millis != null && millis >= today) {
                                     dueDate = dateFormat.format(Date(millis))
                                 }
                                 showDatePicker = false
@@ -271,7 +271,7 @@ fun EditTodoDialog(
                             TextButton(onClick = { showDatePicker = false }) { Text("Cancel") }
                         }
                     ) {
-                        DatePicker(state = datePickerState, dateValidator = { millis -> millis == null || millis >= today })
+                        DatePicker(state = datePickerState)
                     }
                 }
             }
@@ -347,7 +347,7 @@ fun AddTodoDialog(onAdd: (String, String, String) -> Unit, onDismiss: () -> Unit
                         confirmButton = {
                             TextButton(onClick = {
                                 val millis = datePickerState.selectedDateMillis
-                                if (millis != null) {
+                                if (millis != null && millis >= today) {
                                     dueDate = dateFormat.format(Date(millis))
                                 }
                                 showDatePicker = false
@@ -357,7 +357,7 @@ fun AddTodoDialog(onAdd: (String, String, String) -> Unit, onDismiss: () -> Unit
                             TextButton(onClick = { showDatePicker = false }) { Text("Cancel") }
                         }
                     ) {
-                        DatePicker(state = datePickerState, dateValidator = { millis -> millis == null || millis >= today })
+                        DatePicker(state = datePickerState)
                     }
                 }
             }
