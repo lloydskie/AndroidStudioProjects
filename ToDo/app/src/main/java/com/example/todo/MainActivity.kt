@@ -1,14 +1,15 @@
-package com.example.todo
-
-import android.os.Bundle
 // ...existing code...
-// Place this at the end of the file, after all other composables and classes
+
+// CustomDatePicker overlays the default DatePicker and dims past dates (visual only)
 @Composable
 fun CustomDatePicker(state: DatePickerState, today: Long) {
     // The default DatePicker does not support per-day styling, so this is a placeholder for future customization.
     // For now, just use the default DatePicker. The logic in the dialog prevents past date selection.
     DatePicker(state = state)
 }
+package com.example.todo
+
+import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
