@@ -218,8 +218,11 @@ fun EditTodoDialog(
 
     val dateFormat = remember { SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()) }
     val dueDateDisplay = dueDate
+    val today = remember { Calendar.getInstance().apply { set(Calendar.HOUR_OF_DAY, 0); set(Calendar.MINUTE, 0); set(Calendar.SECOND, 0); set(Calendar.MILLISECOND, 0) }.timeInMillis }
     val datePickerState = rememberDatePickerState(
-        initialSelectedDateMillis = try { dateFormat.parse(initialDueDate)?.time } catch (_: Exception) { null }
+        initialSelectedDateMillis = try { dateFormat.parse(initialDueDate)?.time } catch (_: Exception) { null },
+        initialDisplayedMonthMillis = today,
+        selectableDates = { millis -> millis >= today }
     )
 
     AlertDialog(
@@ -303,7 +306,11 @@ fun AddTodoDialog(onAdd: (String, String, String) -> Unit, onDismiss: () -> Unit
 
     val dateFormat = remember { SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()) }
     val dueDateDisplay = dueDate
-    val datePickerState = rememberDatePickerState()
+    val today = remember { Calendar.getInstance().apply { set(Calendar.HOUR_OF_DAY, 0); set(Calendar.MINUTE, 0); set(Calendar.SECOND, 0); set(Calendar.MILLISECOND, 0) }.timeInMillis }
+    val datePickerState = rememberDatePickerState(
+        initialDisplayedMonthMillis = today,
+        selectableDates = { millis -> millis >= today }
+    )
 
     AlertDialog(
         onDismissRequest = onDismiss,
