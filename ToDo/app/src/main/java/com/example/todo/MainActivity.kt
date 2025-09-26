@@ -221,8 +221,7 @@ fun EditTodoDialog(
     val today = remember { Calendar.getInstance().apply { set(Calendar.HOUR_OF_DAY, 0); set(Calendar.MINUTE, 0); set(Calendar.SECOND, 0); set(Calendar.MILLISECOND, 0) }.timeInMillis }
     val datePickerState = rememberDatePickerState(
         initialSelectedDateMillis = try { dateFormat.parse(initialDueDate)?.time } catch (_: Exception) { null },
-        initialDisplayedMonthMillis = today,
-        selectableDates = { millis -> millis >= today }
+        initialDisplayedMonthMillis = today
     )
 
     AlertDialog(
@@ -272,7 +271,7 @@ fun EditTodoDialog(
                             TextButton(onClick = { showDatePicker = false }) { Text("Cancel") }
                         }
                     ) {
-                        DatePicker(state = datePickerState)
+                        DatePicker(state = datePickerState, dateValidator = { millis -> millis == null || millis >= today })
                     }
                 }
             }
@@ -308,8 +307,7 @@ fun AddTodoDialog(onAdd: (String, String, String) -> Unit, onDismiss: () -> Unit
     val dueDateDisplay = dueDate
     val today = remember { Calendar.getInstance().apply { set(Calendar.HOUR_OF_DAY, 0); set(Calendar.MINUTE, 0); set(Calendar.SECOND, 0); set(Calendar.MILLISECOND, 0) }.timeInMillis }
     val datePickerState = rememberDatePickerState(
-        initialDisplayedMonthMillis = today,
-        selectableDates = { millis -> millis >= today }
+        initialDisplayedMonthMillis = today
     )
 
     AlertDialog(
@@ -359,7 +357,7 @@ fun AddTodoDialog(onAdd: (String, String, String) -> Unit, onDismiss: () -> Unit
                             TextButton(onClick = { showDatePicker = false }) { Text("Cancel") }
                         }
                     ) {
-                        DatePicker(state = datePickerState)
+                        DatePicker(state = datePickerState, dateValidator = { millis -> millis == null || millis >= today })
                     }
                 }
             }
