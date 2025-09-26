@@ -45,7 +45,8 @@ data class TodoItem(
     val notes: String = "",
     val isDone: Boolean = false,
     val dueDate: String = "",
-    val category: String = "Personal"
+    val category: String = "Personal",
+    val priority: String = "Medium"
 )
 
 class MainActivity : ComponentActivity() {
@@ -118,8 +119,8 @@ fun MainScreen() {
         }
         if (showAddDialog) {
             AddTodoDialog(
-                onAdd = { title, notes, dueDate, category ->
-                    todos = todos + TodoItem(title, notes, dueDate = dueDate, category = category)
+                onAdd = { title, notes, dueDate, category, priority ->
+                    todos = todos + TodoItem(title, notes, dueDate = dueDate, category = category, priority = priority)
                     showAddDialog = false
                 },
                 onDismiss = { showAddDialog = false }
@@ -132,9 +133,10 @@ fun MainScreen() {
                 initialNotes = todo.notes,
                 initialDueDate = todo.dueDate,
                 initialCategory = todo.category,
-                onEdit = { newTitle, newNotes, newDueDate, newCategory ->
+                initialPriority = todo.priority,
+                onEdit = { newTitle, newNotes, newDueDate, newCategory, newPriority ->
                     todos = todos.toMutableList().also {
-                        it[editingTodoIndex] = todo.copy(title = newTitle, notes = newNotes, dueDate = newDueDate, category = newCategory)
+                        it[editingTodoIndex] = todo.copy(title = newTitle, notes = newNotes, dueDate = newDueDate, category = newCategory, priority = newPriority)
                     }
                     showEditDialog = false
                 },
@@ -180,15 +182,26 @@ fun TodoDetailScreen(
                 color = Color(0xFF222222)
             )
             Spacer(modifier = Modifier.width(8.dp))
-            Text(
-                text = todo.category,
-                color = Color(0xFF4A90E2),
-                fontSize = 16.sp,
-                fontWeight = FontWeight.SemiBold,
-                modifier = Modifier
-                    .padding(horizontal = 8.dp, vertical = 4.dp)
-                    .align(Alignment.CenterVertically)
-            )
+            Column(modifier = Modifier.align(Alignment.CenterVertically)) {
+                Text(
+                    text = todo.category,
+                    color = Color(0xFF4A90E2),
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp)
+                )
+                Text(
+                    text = todo.priority,
+                    color = when (todo.priority) {
+                        "High" -> Color.Red
+                        "Medium" -> Color(0xFFFFA500)
+                        else -> Color(0xFF4CAF50)
+                    },
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Medium,
+                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp)
+                )
+            }
             Spacer(modifier = Modifier.weight(1f))
             IconButton(onClick = onEdit) {
                 Icon(
@@ -231,7 +244,8 @@ fun EditTodoDialog(
     initialNotes: String,
     initialDueDate: String,
     initialCategory: String,
-    onEdit: (String, String, String, String) -> Unit,
+    initialPriority: String,
+    onEdit: (String, String, String, String, String) -> Unit,
     onDelete: () -> Unit,
     onDismiss: () -> Unit
 ) {
@@ -239,6 +253,7 @@ fun EditTodoDialog(
     var notes by remember { mutableStateOf(initialNotes) }
     var dueDate by remember { mutableStateOf(initialDueDate) }
     var category by remember { mutableStateOf(initialCategory) }
+    var priority by remember { mutableStateOf(initialPriority) }
     var showDatePicker by remember { mutableStateOf(false) }
 
     val dateFormat = remember { SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()) }
@@ -345,12 +360,45 @@ fun EditTodoDialog(
                         }
                     }
                 }
+                // Priority Dropdown
+                val priorities = listOf("Low", "Medium", "High")
+                var expandedPriority by remember { mutableStateOf(false) }
+                Box(modifier = Modifier.padding(top = 8.dp)) {
+                    OutlinedTextField(
+                        value = priority,
+                        onValueChange = {},
+                        label = { Text("Priority") },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { expandedPriority = true },
+                        readOnly = true,
+                        trailingIcon = {
+                            IconButton(onClick = { expandedPriority = true }) {
+                                Icon(Icons.Filled.MoreVert, contentDescription = "Select priority")
+                            }
+                        }
+                    )
+                    DropdownMenu(
+                        expanded = expandedPriority,
+                        onDismissRequest = { expandedPriority = false }
+                    ) {
+                        priorities.forEach { p ->
+                            DropdownMenuItem(
+                                text = { Text(p) },
+                                onClick = {
+                                    priority = p
+                                    expandedPriority = false
+                                }
+                            )
+                        }
+                    }
+                }
         },
         confirmButton = {
             Row {
                 TextButton(
                     onClick = {
-                        if (title.isNotBlank()) onEdit(title, notes, dueDate, category)
+                        if (title.isNotBlank()) onEdit(title, notes, dueDate, category, priority)
                     }
                 ) { Text("Save") }
                 Spacer(modifier = Modifier.width(8.dp))
@@ -367,11 +415,12 @@ fun EditTodoDialog(
 
 @Composable
 @OptIn(ExperimentalMaterial3Api::class)
-fun AddTodoDialog(onAdd: (String, String, String, String) -> Unit, onDismiss: () -> Unit) {
+fun AddTodoDialog(onAdd: (String, String, String, String, String) -> Unit, onDismiss: () -> Unit) {
     var title by remember { mutableStateOf("") }
     var notes by remember { mutableStateOf("") }
     var dueDate by remember { mutableStateOf("") }
     var category by remember { mutableStateOf("Personal") }
+    var priority by remember { mutableStateOf("Medium") }
     var showDatePicker by remember { mutableStateOf(false) }
 
     val dateFormat = remember { SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()) }
@@ -445,6 +494,39 @@ fun AddTodoDialog(onAdd: (String, String, String, String) -> Unit, onDismiss: ()
                         }
                     }
                 }
+                // Priority Dropdown
+                val priorities = listOf("Low", "Medium", "High")
+                var expandedPriority by remember { mutableStateOf(false) }
+                Box(modifier = Modifier.padding(top = 8.dp)) {
+                    OutlinedTextField(
+                        value = priority,
+                        onValueChange = {},
+                        label = { Text("Priority") },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { expandedPriority = true },
+                        readOnly = true,
+                        trailingIcon = {
+                            IconButton(onClick = { expandedPriority = true }) {
+                                Icon(Icons.Filled.MoreVert, contentDescription = "Select priority")
+                            }
+                        }
+                    )
+                    DropdownMenu(
+                        expanded = expandedPriority,
+                        onDismissRequest = { expandedPriority = false }
+                    ) {
+                        priorities.forEach { p ->
+                            DropdownMenuItem(
+                                text = { Text(p) },
+                                onClick = {
+                                    priority = p
+                                    expandedPriority = false
+                                }
+                            )
+                        }
+                    }
+                }
                 var showWarning by remember { mutableStateOf(false) }
                 if (showDatePicker) {
                     DatePickerDialog(
@@ -493,7 +575,7 @@ fun CustomDatePicker(state: DatePickerState, today: Long) {
         confirmButton = {
             TextButton(
                 onClick = {
-                    if (title.isNotBlank()) onAdd(title, notes, dueDate, category)
+                    if (title.isNotBlank()) onAdd(title, notes, dueDate, category, priority)
                 }
             ) { Text("Add") }
         },
