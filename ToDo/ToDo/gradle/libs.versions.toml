@@ -1,0 +1,12 @@
+[versions]
+kotlin = "1.7.10"
+androidGradlePlugin = "7.3.1"
+
+[libraries]
+androidx.appcompat = { module = "androidx.appcompat:appcompat", version.ref = "androidx.appcompat" }
+androidx.core = { module = "androidx.core:core-ktx", version.ref = "androidx.core" }
+androidx.lifecycle = { module = "androidx.lifecycle:lifecycle-runtime-ktx", version.ref = "androidx.lifecycle" }
+material = { module = "com.google.android.material:material", version.ref = "material" }
+
+[extras]
+coroutines = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-android", version.ref = "coroutines" }
