@@ -1,4 +1,5 @@
 // CustomDatePicker overlays the default DatePicker and dims past dates (visual only)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CustomDatePicker(state: DatePickerState, today: Long) {
     // The default DatePicker does not support per-day styling, so this is a placeholder for future customization.
