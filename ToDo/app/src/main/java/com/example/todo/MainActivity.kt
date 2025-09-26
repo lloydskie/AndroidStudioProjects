@@ -1,32 +1,41 @@
 package com.example.todo
 
+import android.Manifest
+import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Event
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.*
+import androidx.compose.material3.DatePicker
+import androidx.compose.material3.DatePickerDialog
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.material3.DatePickerDialog
-import androidx.compose.material3.DatePicker
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.foundation.clickable
-import androidx.compose.material.icons.filled.Event
+import androidx.core.content.ContextCompat
+import com.example.todo.ui.theme.ToDoTheme
 import java.text.SimpleDateFormat
 import java.util.*
-import com.example.todo.ui.theme.ToDoTheme
+
+// Data model now includes a stable id to map reminders to tasks
 
 data class TodoItem(
     val title: String,
@@ -34,7 +43,8 @@ data class TodoItem(
     val isDone: Boolean = false,
     val dueDate: String = "",
     val category: String = "Personal",
-    val priority: String = "Medium"
+    val priority: String = "Medium",
+    val id: String = UUID.randomUUID().toString()
 )
 
 class MainActivity : ComponentActivity() {
@@ -50,7 +60,25 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
+fun EnsureNotificationPermission() {
+    val context = LocalContext.current
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+        val permission = Manifest.permission.POST_NOTIFICATIONS
+        val launcher = rememberLauncherForActivityResult(
+            ActivityResultContracts.RequestPermission()
+        ) { /* no-op */ }
+        LaunchedEffect(Unit) {
+            val granted = ContextCompat.checkSelfPermission(context, permission) == PackageManager.PERMISSION_GRANTED
+            if (!granted) launcher.launch(permission)
+        }
+    }
+}
+
+@Composable
 fun MainScreen() {
+    EnsureNotificationPermission()
+    val context = LocalContext.current
+
     var todos by remember { mutableStateOf(listOf<TodoItem>()) }
     var showAddDialog by remember { mutableStateOf(false) }
     var showEditDialog by remember { mutableStateOf(false) }
@@ -95,7 +123,13 @@ fun MainScreen() {
                             onToggleComplete = {
                                 todos = todos.toMutableList().also {
                                     val t = it[index]
-                                    it[index] = t.copy(isDone = !t.isDone)
+                                    val toggled = t.copy(isDone = !t.isDone)
+                                    it[index] = toggled
+                                    if (toggled.isDone) {
+                                        ReminderScheduler.cancel(context, toggled.id)
+                                    } else if (toggled.dueDate.isNotBlank()) {
+                                        ReminderScheduler.schedule(context, toggled.id, toggled.title, toggled.notes, toggled.dueDate)
+                                    }
                                 }
                             }
                         )
@@ -107,7 +141,11 @@ fun MainScreen() {
         if (showAddDialog) {
             AddTodoDialog(
                 onAdd = { title: String, notes: String, dueDate: String, category: String, priority: String ->
-                    todos = todos + TodoItem(title, notes, dueDate = dueDate, category = category, priority = priority)
+                    val newItem = TodoItem(title = title, notes = notes, dueDate = dueDate, category = category, priority = priority)
+                    todos = todos + newItem
+                    if (!newItem.isDone && newItem.dueDate.isNotBlank()) {
+                        ReminderScheduler.schedule(context, newItem.id, newItem.title, newItem.notes, newItem.dueDate)
+                    }
                     showAddDialog = false
                 },
                 onDismiss = { showAddDialog = false }
@@ -123,11 +161,17 @@ fun MainScreen() {
                 initialPriority = todo.priority,
                 onEdit = { newTitle: String, newNotes: String, newDueDate: String, newCategory: String, newPriority: String ->
                     todos = todos.toMutableList().also {
-                        it[editingTodoIndex] = todo.copy(title = newTitle, notes = newNotes, dueDate = newDueDate, category = newCategory, priority = newPriority)
+                        val updated = todo.copy(title = newTitle, notes = newNotes, dueDate = newDueDate, category = newCategory, priority = newPriority)
+                        it[editingTodoIndex] = updated
+                        ReminderScheduler.cancel(context, todo.id)
+                        if (!updated.isDone && updated.dueDate.isNotBlank()) {
+                            ReminderScheduler.schedule(context, updated.id, updated.title, updated.notes, updated.dueDate)
+                        }
                     }
                     showEditDialog = false
                 },
                 onDelete = {
+                    ReminderScheduler.cancel(context, todo.id)
                     todos = todos.toMutableList().also {
                         it.removeAt(editingTodoIndex)
                     }
