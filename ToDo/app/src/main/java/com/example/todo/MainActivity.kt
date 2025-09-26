@@ -1,3 +1,5 @@
+package com.example.todo
+
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -359,7 +361,7 @@ fun AddTodoDialog(
                             TextButton(onClick = { showDatePicker = false }) { Text("Cancel") }
                         }
                     ) {
-                        CustomDatePicker(state = datePickerState, today = today)
+                        CustomDatePicker(state = datePickerState)
                     }
                 }
                 if (showWarning) {
@@ -464,7 +466,7 @@ fun EditTodoDialog(
                             TextButton(onClick = { showDatePicker = false }) { Text("Cancel") }
                         }
                     ) {
-                        CustomDatePicker(state = datePickerState, today = today)
+                        CustomDatePicker(state = datePickerState)
                     }
                 }
                 if (showWarning) {
@@ -543,6 +545,7 @@ fun EditTodoDialog(
                         }
                     }
                 }
+            }
         },
         confirmButton = {
             Row {
@@ -565,7 +568,7 @@ fun EditTodoDialog(
 
 @Composable
 @OptIn(ExperimentalMaterial3Api::class)
-fun CustomDatePicker(state: DatePickerState, today: Long) {
+fun CustomDatePicker(state: DatePickerState) {
     Box {
         DatePicker(state = state)
     }
