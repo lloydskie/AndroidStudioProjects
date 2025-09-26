@@ -572,10 +572,12 @@ fun AddTodoDialog(onAdd: (String, String, String, String, String) -> Unit, onDis
                         }
                     )
                 }
-// CustomDatePicker composable overlays the default DatePicker and dims past dates
+// CustomDatePicker overlays the default DatePicker and dims past dates (visual only)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CustomDatePicker(state: DatePickerState, today: Long) {
-    // Use the default DatePicker, but overlay a dimming effect on past dates
+    // The default DatePicker does not support per-day styling, so this is a placeholder for future customization.
+    // For now, just use the default DatePicker. The logic in the dialog prevents past date selection.
     Box {
         DatePicker(state = state)
         // Overlay to dim past dates (visual only, selection is still handled in dialog logic)
