@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:better_player/better_player.dart';
+import 'package:video_player/video_player.dart';
+import 'package:chewie/chewie.dart';
 
 class VideoPlayerScreen extends StatefulWidget {
   final String url;
@@ -17,9 +17,9 @@ class VideoPlayerScreen extends StatefulWidget {
 }
 
 class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
-  BetterPlayerController? _betterPlayerController;
+  VideoPlayerController? _videoController;
+  ChewieController? _chewieController;
   bool _isPlayerReady = false;
-  bool _isFullscreen = false;
 
   @override
   void initState() {
@@ -27,139 +27,73 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
     _initializePlayer();
   }
 
-  void _initializePlayer() {
-    // Configure better player
-    BetterPlayerConfiguration betterPlayerConfiguration = BetterPlayerConfiguration(
-      aspectRatio: 16 / 9,
-      autoPlay: true,
-      looping: false,
-      fullScreenByDefault: false,
-      allowedScreenSleep: false,
-      deviceOrientationsOnFullScreen: [
-        DeviceOrientation.landscapeLeft,
-        DeviceOrientation.landscapeRight,
-      ],
-      deviceOrientationsAfterFullScreen: [
-        DeviceOrientation.portraitUp,
-      ],
-      systemOverlaysAfterFullScreen: SystemUiOverlay.values,
-      controlsConfiguration: const BetterPlayerControlsConfiguration(
-        controlBarColor: Colors.black54,
-        iconsColor: Colors.white,
-        playIcon: Icons.play_arrow,
-        pauseIcon: Icons.pause,
-        muteIcon: Icons.volume_off,
-        unMuteIcon: Icons.volume_up,
-        fullscreenEnableIcon: Icons.fullscreen,
-        fullscreenDisableIcon: Icons.fullscreen_exit,
-        progressBarPlayedColor: Colors.deepPurple,
-        progressBarHandleColor: Colors.deepPurpleAccent,
-        progressBarBufferedColor: Colors.grey,
-        progressBarBackgroundColor: Colors.black26,
-        textColor: Colors.white,
-        controlBarHeight: 40,
-        loadingColor: Colors.deepPurple,
-        overflowMenuIconsColor: Colors.white,
-        enableFullscreen: true,
-        enableMute: true,
-        enableProgressText: true,
-        enableProgressBar: true,
-        enablePlayPause: true,
-        enableOverflowMenu: true,
-        showControlsOnInitialize: false,
-      ),
-    );
+  Future<void> _initializePlayer() async {
+    try {
+      final controller = VideoPlayerController.networkUrl(Uri.parse(widget.url));
+      _videoController = controller;
+      await controller.initialize();
 
-    // Determine data source type based on URL extension
-    BetterPlayerDataSource dataSource;
-    if (widget.url.contains('.m3u8')) {
-      // HLS stream
-      dataSource = BetterPlayerDataSource(
-        BetterPlayerDataSourceType.network,
-        widget.url,
-        liveStream: false,
-        useAsmsSubtitles: true,
-        videoFormat: BetterPlayerVideoFormat.hls,
+      _chewieController = ChewieController(
+        videoPlayerController: controller,
+        autoPlay: true,
+        looping: false,
+        allowFullScreen: true,
+        allowMuting: true,
+        materialProgressColors: ChewieProgressColors(
+          playedColor: Colors.deepPurple,
+          handleColor: Colors.deepPurpleAccent,
+          backgroundColor: Colors.black26,
+          bufferedColor: Colors.grey,
+        ),
       );
-    } else {
-      // Regular MP4 or other formats
-      dataSource = BetterPlayerDataSource(
-        BetterPlayerDataSourceType.network,
-        widget.url,
-        videoFormat: BetterPlayerVideoFormat.other,
-      );
-    }
 
-    _betterPlayerController = BetterPlayerController(
-      betterPlayerConfiguration,
-      betterPlayerDataSource: dataSource,
-    );
-
-    // Listen for player events
-    _betterPlayerController!.addEventsListener((BetterPlayerEvent event) {
-      if (event.betterPlayerEventType == BetterPlayerEventType.initialized) {
+      if (mounted) {
         setState(() {
           _isPlayerReady = true;
         });
       }
-      // Note: Better Player handles fullscreen state internally
-      // We'll track it through the controller's isFullScreen property
-    });
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isPlayerReady = false;
+        });
+      }
+    }
   }
 
   @override
   void dispose() {
-    _betterPlayerController?.dispose();
+    _chewieController?.dispose();
+    _videoController?.dispose();
     super.dispose();
-  }
-
-  void _toggleFullscreen() {
-    if (_betterPlayerController != null) {
-      if (_isFullscreen) {
-        _betterPlayerController!.exitFullScreen();
-      } else {
-        _betterPlayerController!.enterFullScreen();
-      }
-    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.black,
-      appBar: _isFullscreen
-          ? null
-          : AppBar(
-              backgroundColor: Colors.black,
-              elevation: 0,
-              leading: IconButton(
-                icon: const Icon(Icons.arrow_back, color: Colors.white),
-                onPressed: () => Navigator.of(context).pop(),
-              ),
-              title: Text(
-                widget.title ?? 'Video Player',
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 18,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-              actions: [
-                IconButton(
-                  icon: Icon(
-                    _isFullscreen ? Icons.fullscreen_exit : Icons.fullscreen,
-                    color: Colors.white,
-                  ),
-                  onPressed: _toggleFullscreen,
-                ),
-              ],
-            ),
+      appBar: AppBar(
+        backgroundColor: Colors.black,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
+        title: Text(
+          widget.title ?? 'Video Player',
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 18,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+      ),
       body: _buildVideoPlayer(),
     );
   }
 
   Widget _buildVideoPlayer() {
-    if (_betterPlayerController == null) {
+    if (_chewieController == null || _videoController == null) {
       return const Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -182,12 +116,14 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
 
     return Center(
       child: AspectRatio(
-        aspectRatio: _isFullscreen ? MediaQuery.of(context).size.aspectRatio : 16 / 9,
+        aspectRatio: _videoController!.value.isInitialized
+            ? _videoController!.value.aspectRatio
+            : 16 / 9,
         child: Container(
           color: Colors.black,
           child: Stack(
             children: [
-              BetterPlayer(controller: _betterPlayerController!),
+              Chewie(controller: _chewieController!),
               if (!_isPlayerReady)
                 Container(
                   color: Colors.black,
@@ -219,7 +155,7 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
   }
 }
 
-// Extension to help with video format detection
+// Extension to help with video format detection (not strictly needed for video_player, but kept for reference)
 extension VideoUrlExtension on String {
   bool get isHLS => contains('.m3u8');
   bool get isMP4 => contains('.mp4');
